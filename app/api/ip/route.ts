@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const storePath = path.join(process.cwd(), "data", "ip-store.json");
+const storePath = path.join(process.cwd(), "data", "ip.json");
 
 type IpStore = {
   ips: Record<string, number>;
@@ -18,20 +18,50 @@ function isLikelyIPv4(ip: string) {
   });
 }
 
+const ALLOWED_ORIGINS = [
+  "https://animals-backend.vercel.app",
+  // add your frontend origin(s) here, e.g.:
+  // "http://localhost:3000",
+  // "http://localhost:5173",
+];
+
+function withCorsHeaders(response: Response) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  // If you want stricter control, replace "*" with the incoming origin and validate it.
+
+  response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+
+  // Useful if you want cookies/auth later
+  // response.headers.set("Access-Control-Allow-Credentials", "true");
+
+  return response;
+}
+
+export async function OPTIONS() {
+  return withCorsHeaders(new Response(null, { status: 204 }));
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
     const ip = body?.ip;
 
     if (typeof ip !== "string" || !ip.trim()) {
-      return Response.json({ ok: false, error: "Missing 'ip' in JSON body." }, { status: 400 });
+      return Response.json(
+        { ok: false, error: "Missing 'ip' in JSON body." },
+        { status: 400 },
+      );
     }
 
     const ipTrimmed = ip.trim();
 
     // Basic check (IPv4). Adjust if you want IPv6 support.
     if (!isLikelyIPv4(ipTrimmed)) {
-      return Response.json({ ok: false, error: "Invalid IPv4 address format." }, { status: 400 });
+      return Response.json(
+        { ok: false, error: "Invalid IPv4 address format." },
+        { status: 400 },
+      );
     }
 
     let store: IpStore;
@@ -60,6 +90,8 @@ export async function POST(req: Request) {
       value: store.ips[ipTrimmed],
     });
   } catch (e: any) {
-    return Response.json({ ok: false, error: "Server error." }, { status: 500 });
+    return withCorsHeaders(
+      Response.json({ ok: false, error: "Server error" }, { status: 500 })
+    );
   }
 }
