@@ -22,10 +22,17 @@ export async function GET() {
     readJsonOrDefault(logsPath, []),
   ]);
 
+  // take each key in ip.ips, then make sum of values
+  const totalVisits = Object.values(ip.ips ?? {}).reduce(
+    (acc, val) => acc + (val as number),
+    0,
+  );
+
   return Response.json(
     {
       ip,
       logs,
+      totalVisits,
     },
     { status: 200 },
   );
