@@ -23,6 +23,25 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // Match any file inside the public/glb/ directory
+        source: "/v2/:path*",
+        headers: [
+          {
+            key: "Access-Control-Allow-Origin",
+            // Allow any origin to fetch these 3D models
+            value: "*",
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET, OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type",
+          },
+        ],
+      },
     ];
   },
 };
